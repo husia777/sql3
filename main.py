@@ -90,13 +90,30 @@ def creating_structure_database(cursor):
     """
     cursor.execute(req)
 
+def get_data():
+    """
+    Функция считывания csv файла
+    :return: Возвращает отсортированный файл в виде списка словарей
+    """
+    results = []
+    with open('database_animals.csv', encoding='utf-8') as File:
+        reader = csv.reader(File)
+        for row in reader:
+            results.append(row)
+
+            print(row)
+        return results
+
+
+
+
 
 def main():
     conn = db_connecting()
     if conn:
         cursor = conn.cursor()
-    creating_structure_database(cursor)
-
+   # creating_structure_database(cursor)
+    get_data()
 
 if __name__ == '__main__':
     main()
