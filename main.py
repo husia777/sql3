@@ -150,10 +150,10 @@ def creating_summary_tables(cursor):
     SELECT  da.animal_id, type.id_type, da.name,  breed.id_breed, 
                          cl1.id_color, cl2.id_color, da.date_of_birth::TIMESTAMP
     FROM  database_animals AS da
-    JOIN color cl1 ON da.color1 = cl1.name_color
+    LEFT JOIN color cl1 ON da.color1 = cl1.name_color
     LEFT JOIN color cl2 ON da.color2 = cl2.name_color
     LEFT JOIN breed ON breed.name_breed = da.breed
-    JOIN  type ON type.name_type = da.animal_type 
+    LEFT JOIN  type ON type.name_type = da.animal_type 
     GROUP BY  da.animal_id, type.id_type, da.name,  breed.id_breed, 
                          cl1.id_color, cl2.id_color, da.date_of_birth::TIMESTAMP;
     
@@ -171,6 +171,17 @@ def creating_summary_tables(cursor):
     cursor.execute(req)
 
 
+def creating_users(cursor):
+    req = """
+     CREATE USER husia777 WITH PASSWORD 'postgres';
+     GRANT ALL PRIVILEGES ON DATABASE "animals" to husia777;
+     
+     CREATE USER user1 WITH PASSWORD 'postgres';
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "animal" TO user1;     
+     
+    """
+    cursor.execute(req)
+
 def main():
     conn = db_connecting()
     if conn:
@@ -178,6 +189,7 @@ def main():
     creating_structure_database(cursor)
     data_distribution(cursor)
     creating_summary_tables(cursor)
+    creating_users(cursor)
     conn.close()
     cursor.close()
 if __name__ == '__main__':
