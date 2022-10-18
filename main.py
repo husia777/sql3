@@ -80,10 +80,10 @@ def creating_structure_database(cursor):
     CREATE TABLE  IF NOT EXISTS "shelter_info" (
         "id_shelter_info" serial NOT NULL,
         "fk_animal_id" varchar NOT NULL,
-        "fk_outcome_subtype" integer NOT NULL,
+        "fk_outcome_subtype" integer ,
         "outcome_month" integer NOT NULL,
         "outcome_year" integer NOT NULL,
-        "fk_outcome_type" integer NOT NULL,
+        "fk_outcome_type" integer ,
         "age_upon_outcome" varchar(255) NOT NULL
     );
     
@@ -147,23 +147,25 @@ def creating_summary_tables(cursor):
     req = """
     INSERT INTO animal(animal_id, fk_animal_type, name,
                  fk_breed, fk_color1, fk_color2, birth)
-    SELECT DISTINCT da.animal_id, type.id_type, da.name,  breed.id_breed, 
+    SELECT  da.animal_id, type.id_type, da.name,  breed.id_breed, 
                          cl1.id_color, cl2.id_color, da.date_of_birth::TIMESTAMP
     FROM  database_animals AS da
     JOIN color cl1 ON da.color1 = cl1.name_color
     LEFT JOIN color cl2 ON da.color2 = cl2.name_color
-    JOIN breed ON breed.name_breed = da.breed
-    JOIN  type ON type.name_type = da.animal_type ;
-    
+    LEFT JOIN breed ON breed.name_breed = da.breed
+    JOIN  type ON type.name_type = da.animal_type 
+    GROUP BY  da.animal_id, type.id_type, da.name,  breed.id_breed, 
+                         cl1.id_color, cl2.id_color, da.date_of_birth::TIMESTAMP;
     
     INSERT INTO shelter_info(fk_animal_id, fk_outcome_subtype,
                             outcome_month, outcome_year,fk_outcome_type,
                             age_upon_outcome)
-    SELECT  da.animal_id, os.id_outcome_subtype, da.outcome_month, 
-                         da.outcome_year, ot.id_outcome,  da.outcome_year -  EXTRACT(YEAR FROM da.date_of_birth::TIMESTAMP)::INTEGER 
+    SELECT   da.animal_id, os.id_outcome_subtype, da.outcome_month, 
+                         da.outcome_year, ot.id_outcome,  da.age_upon_outcome
     FROM  database_animals AS da
-    JOIN outcome_subtype os ON os.name_outcome_subtype = da.outcome_subtype
-    JOIN outcome_type ot ON ot.name_outcome_type = da.outcome_type;
+    LEFT JOIN animal ON da.animal_id = animal.animal_id
+    LEFT JOIN outcome_subtype os ON os.name_outcome_subtype = da.outcome_subtype
+    LEFT JOIN outcome_type ot ON ot.name_outcome_type = da.outcome_type;
     """
 
     cursor.execute(req)
@@ -173,8 +175,8 @@ def main():
     conn = db_connecting()
     if conn:
         cursor = conn.cursor()
-    # creating_structure_database(cursor)
-    # data_distribution(cursor)
+    creating_structure_database(cursor)
+    data_distribution(cursor)
     creating_summary_tables(cursor)
     conn.close()
     cursor.close()
